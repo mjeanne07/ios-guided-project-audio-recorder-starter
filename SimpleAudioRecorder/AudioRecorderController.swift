@@ -121,7 +121,7 @@ class AudioRecorderController: UIViewController {
      guard let self = self else { return }
 
      self.updateViews()
-/*
+
      if let audioRecorder = self.audioRecorder,
      self.isRecording == true {
 
@@ -129,7 +129,7 @@ class AudioRecorderController: UIViewController {
      self.audioVisualizer.addValue(decibelValue: audioRecorder.averagePower(forChannel: 0))
 
      }
-*/
+
      if let audioPlayer = self.audioPlayer,
      self.isPlaying == true {
 
@@ -257,6 +257,7 @@ class AudioRecorderController: UIViewController {
         do {
             audioRecorder = try AVAudioRecorder(url: recordingURL!, format: format)
             audioRecorder?.delegate = self
+            audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
             updateViews()
             startTimer()
