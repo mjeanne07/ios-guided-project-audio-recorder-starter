@@ -18,6 +18,7 @@ class AudioRecorderController: UIViewController {
             }
             audioPlayer.delegate = self
             audioPlayer.isMeteringEnabled = true
+            updateViews()
         }
     }
 
@@ -59,7 +60,31 @@ class AudioRecorderController: UIViewController {
         loadAudio()
         updateViews()
     }
-
+      func updateViews() {
+          playButton.isEnabled = !isRecording
+          recordButton.isEnabled = !isPlaying
+          timeSlider.isEnabled = !isRecording
+          playButton.isSelected = isPlaying
+          recordButton.isSelected = isRecording
+          if !isRecording {
+              let elapsedTime = audioPlayer?.currentTime ?? 0
+              let duration = audioPlayer?.duration ?? 0
+              let timeRemaining = duration.rounded() - elapsedTime
+              timeElapsedLabel.text = timeIntervalFormatter.string(from: elapsedTime)
+              timeSlider.minimumValue = 0
+              timeSlider.maximumValue = Float(duration)
+              timeSlider.value = Float(elapsedTime)
+              timeRemainingLabel.text = "-" + timeIntervalFormatter.string(from: timeRemaining)!
+          } else {
+              let elapsedTime = audioRecorder?.currentTime ?? 0
+              timeElapsedLabel.text = "--:--"
+              timeSlider.minimumValue = 0
+              timeSlider.maximumValue = 1
+              timeSlider.value = 0
+              timeRemainingLabel.text = timeIntervalFormatter.string(from: elapsedTime)
+          }
+      }
+/*
     func updateViews() {
         playButton.isSelected = isPlaying
 
@@ -75,6 +100,7 @@ class AudioRecorderController: UIViewController {
         timeRemainingLabel.text = "_" + timeIntervalFormatter.string(from: timeRemaining)!
 
     }
+ */
 
     deinit {
         timer?.invalidate()
@@ -230,7 +256,10 @@ class AudioRecorderController: UIViewController {
 
         do {
             audioRecorder = try AVAudioRecorder(url: recordingURL!, format: format)
+            audioRecorder?.delegate = self
             audioRecorder?.record()
+            updateViews()
+            startTimer()
         } catch {
             preconditionFailure("The audio recorder could not be created with \(recordingURL!) and \(format)")
         }
@@ -239,6 +268,8 @@ class AudioRecorderController: UIViewController {
     
     func stopRecording() {
         audioRecorder?.stop()
+        updateViews()
+        cancelTimer()
     }
     
     // MARK: - Actions
@@ -280,6 +311,21 @@ extension AudioRecorderController: AVAudioPlayerDelegate {
         if let error = error {
             print("Audio Player Error: \(error)")
         }
+    }
+}
+
+extension AudioRecorderController: AVAudioRecorderDelegate {
+    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        if let recordingURL = recordingURL {
+            audioPlayer = try? AVAudioPlayer(contentsOf: recordingURL)
+        }
+        recordingURL = nil
+
+    }
+    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+        if let error = error {
+                   print("Audio Recorder Error: \(error)")
+               }
     }
 }
 
